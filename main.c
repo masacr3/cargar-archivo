@@ -4,10 +4,28 @@
 #include <stddef.h>
 //catedra consept
 #include "strutil.h" //splitMEEEE!
+#include "hash.h" //DOS
+#include "abb.h" //Ver-visitantes
 
 #define CANT_LINE 20
 
+//prototype
 bool prueba(char*);
+
+/*
+ *  wrapper para el hash
+ */
+
+void eliminar_tiempo(lista_t*);
+
+/* DOS functions */
+ve
+bool es_dos(const char*, const char*);
+
+//principal function
+void DOS(const hash_t*);
+
+
 
 int main(){
   char* archivo = "access001.log";
@@ -83,4 +101,9 @@ bool prueba(char* archivo){
     free_strv(datos);
   }
   return true;
+}
+
+
+void eliminar_tiempo(lista_t* lista){
+    lista_destruir(lista,free);
 }
