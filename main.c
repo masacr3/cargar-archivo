@@ -10,7 +10,7 @@
 bool prueba(char*);
 
 int main(){
-  char* archivo = "";
+  char* archivo = "access001.log";
   prueba(archivo);
   return 0;
 }
