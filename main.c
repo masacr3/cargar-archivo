@@ -6,6 +6,7 @@
 #include "strutil.h" //splitMEEEE!
 #include "hash.h" //DOS
 #include "abb.h" //Ver-visitantes
+#include "lista.h" // listas_ip
 
 #define CANT_LINE 20
 
