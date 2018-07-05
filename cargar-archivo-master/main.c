@@ -10,12 +10,11 @@
 //catedra consept
 #include "strutil.h" //splitMEEEE!
 #include "hash.h" //DOS
-//#include "abb.h" //Ver-visitantes
+#include "abb.h" //Ver-visitantes
 #include "lista.h" // listas
 
 //prototype
-bool cargar_archivo(char*);
-void pruebadiff();
+bool cargar_archivo(char*,abb_t*);
 
 
 /*
@@ -28,21 +27,31 @@ void eliminar_tiempo(void*);
  *	Dos
  */
  
+
 time_t iso8601_to_time(const char*); //ok
+
+//calcula si el tiempo esta dentro del rango DOS
 bool tiempo_sospechoso(char*,char*); //ok
+
+//cargar los tiempos al hash con sus respectivos Ips
 void cargar_tiempo(hash_t*,char*,char*); //ok
+
+//chequea si la lista tiene un ataque DOS
 bool dos_attack(lista_t*);//ok
+
+//Verifica los ips con DOS
 void DOS(hash_t*); // agregar el heap
 
 
 int main(){
   char* archivo = "access002.log";
-  cargar_archivo(archivo);
+  abb_t* visitantes = abb_crear(cmp_ip);
+  cargar_archivo(archivo, abb);
   return 0;
 }
 
 
-bool cargar_archivo(char* archivo){
+bool cargar_archivo(char* archivo, abb_t* visitantes){
   FILE* f;
 
   if ( (f = fopen(archivo,"r")) == NULL ) return false;
@@ -81,7 +90,7 @@ bool cargar_archivo(char* archivo){
       return false;
     }
 		
-		/*
+		
     char* ip_visitantes = malloc( sizeof(char) * ( tam + 1 ) );
 
     if (!ip_visitantes){
@@ -92,7 +101,7 @@ bool cargar_archivo(char* archivo){
       free(ip_dos);//ip
       return false;
     }
-		*/
+		
 
     char* tiempo = malloc( sizeof(char) * ( strlen(datos[1]) + 1) );
 
@@ -102,26 +111,33 @@ bool cargar_archivo(char* archivo){
       free(linea);//linea
       hash_destruir(hash);
       free(ip_dos);//ip
-      //free(ip_visitantes); //ip2
+      free(ip_visitantes); //ip2
       return false;
     }
 
     //todo OK creo copias para las siguientes estructuras
     strcpy(ip_dos, datos[0]);
     
-    //strcpy(ip_visitantes, datos[0]);
+    strcpy(ip_visitantes, datos[0]);
     
     strcpy(tiempo, datos[1]);
    
     cargar_tiempo( hash, ip_dos, tiempo );
     
+    abb_guardar(visitantes, ip_visitantes, NULL);
+    
     //tengo que borrar ya que el hash guarda una copia
     //y me queda colgado UU.
+    free(ip_visitantes)
     free(ip_dos);    
     free_strv(datos);
   }
 	
 	DOS(hash);
+	
+	//RESULT
+	fprintf(stdout,"%s","OK");
+	
 
 	fclose(f);
 	free(linea);
@@ -204,6 +220,12 @@ bool dos_attack( lista_t* lista_tiempo ){
 
 
 void DOS (hash_t* hash){
+
+	heap_t* heap = heap_crear(cmp_ip);
+	
+	if(!heap) return;
+		
+	
 	hash_iter_t* iter = hash_iter_crear(hash);
 
 	if (!iter) return ;
@@ -223,15 +245,20 @@ void DOS (hash_t* hash){
 			}
 			
 			strcpy(copy_ip,ip);
-			//heap_encolar(heap, copy_ip);
-			fprintf(stdout,"DoS: %s\n",copy_ip);
 			
-			//off passed
-			free(copy_ip);
+			heap_encolar(heap, copy_ip);
+			
 		}
 		hash_iter_avanzar(iter);
 	}
-
+	
+	while ( !heap_esta_vacio(heap) ){
+		char* ip = heap_desencolar(heap);
+		fprintf(stdout,"DoS: %s\n",ip);
+		free(ip);
+	}
+	
+	heap_destruir(heap, NULL);
 	hash_iter_destruir(iter);
 
 }
