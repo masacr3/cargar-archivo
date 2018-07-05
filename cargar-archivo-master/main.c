@@ -1,9 +1,12 @@
 #define _GNU_SOURCE
+#define _XOPEN_SOURCE
+#define TIME_FORMAT "%FT%T%z"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
+#include <time.h>
 //catedra consept
 #include "strutil.h" //splitMEEEE!
 #include "hash.h" //DOS
@@ -23,10 +26,12 @@ void eliminar_tiempo(void*);
 /*
  *	Dos
  */
-
-
-void cargar_tiempo(hash_t*,char*,char*);
-
+ 
+time_t iso8601_to_time(const char*); //ok
+bool tiempo_sospechoso(char*,char*); //ok
+void cargar_tiempo(hash_t*,char*,char*); //ok
+bool dos_attack(lista_t*);
+void DOS(hash_t*); // agregar el heap
 
 //bool es_dos(const char*, const char*);
 
@@ -59,7 +64,7 @@ bool prueba(char* archivo){
 	}
 
   
-  while ( ( read = getline(&linea, &capacidad, f) ) != -1 && leer < 5){
+  while ( ( read = getline(&linea, &capacidad, f) ) != -1 ){
     
 		leer++;		
 
@@ -122,7 +127,7 @@ bool prueba(char* archivo){
     free(ip_dos);    
     free_strv(datos);
   }
-	
+	/*
 	hash_iter_t *it = hash_iter_crear(hash);
 	
 	while( !hash_iter_al_final(it) ){
@@ -141,7 +146,9 @@ bool prueba(char* archivo){
 		hash_iter_avanzar(it);
 	}
 	hash_iter_destruir(it);
+	*/
 	
+	DOS(hash);
 	
 		
 
@@ -180,5 +187,88 @@ void cargar_tiempo(hash_t* hash, char* ip, char* tiempo){
 	
 }
 
+//inicio < fin
+bool tiempo_sospechoso( char* inicio, char* fin){
+	time_t i = iso8601_to_time(inicio);
+	time_t f = iso8601_to_time(fin);
+	return ( difftime(i,f) < 2.0 );
+}
 
 
+bool dos_attack( lista_t* lista_tiempo ){
+
+	// si esta vacio o el largo de tiempos es menor a 5 no hay atacke
+	if ( lista_esta_vacia(lista_tiempo) || lista_largo(lista_tiempo) < 5 ) return false;
+
+	lista_iter_t* primero = lista_iter_crear(lista_tiempo);
+
+	if (!primero) return false;
+
+	lista_iter_t* ultimo = lista_iter_crear(lista_tiempo);
+
+	if (!ultimo){
+		lista_iter_destruir(primero);
+		return false;
+	}
+
+	bool es_DOS = false;
+
+	//avanzo hasta la 5ta posicion
+	for (int i=0; i < 5; i++) lista_iter_avanzar(ultimo);
+
+	while ( !lista_iter_al_final(ultimo) ){
+		char* inicio = lista_iter_ver_actual(primero);
+		char* fin = lista_iter_ver_actual(ultimo);
+
+		es_DOS = tiempo_sospechoso(inicio,fin);
+
+		if ( es_DOS ) break;
+		
+		lista_iter_avanzar(primero);
+		lista_iter_avanzar(ultimo);	
+	}
+
+	lista_iter_destruir(primero);
+	lista_iter_destruir(ultimo);
+
+	return es_DOS;
+}
+
+
+void DOS (hash_t* hash){
+	hash_iter_t* iter = hash_iter_crear(hash);
+
+	if (!iter) return ;
+	
+	while ( !hash_iter_al_final(iter) ){
+		const char* ip = hash_iter_ver_actual(iter);
+		lista_t* lista_tiempos = hash_obtener(hash,ip);
+		
+		if ( dos_attack(lista_tiempos) ) {
+			char* copy_ip = malloc( sizeof(char) * ( strlen(ip) + 1 ) );
+			
+			if ( !copy_ip ){
+				hash_iter_destruir(iter);
+				return;
+			}
+			
+			strcpy(copy_ip,ip);
+			//heap_encolar(heap, copy_ip);
+			fprintf(stdout,"DoS: %s\n",copy_ip);
+			
+			//off passed
+			free(copy_ip);
+		}
+		hash_iter_avanzar(iter);
+	}
+
+	hash_iter_destruir(iter);
+
+}
+
+time_t iso8601_to_time(const char* iso8601)
+{
+    struct tm bktime = { 0 };
+    strptime(iso8601, TIME_FORMAT, &bktime);
+    return mktime(&bktime);
+}
