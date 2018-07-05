@@ -15,6 +15,7 @@
 
 //prototype
 bool prueba(char*);
+void pruebadiff();
 
 
 /*
@@ -41,10 +42,25 @@ void DOS(hash_t*); // agregar el heap
 
 
 int main(){
-  char* archivo = "access001.log";
+  char* archivo = "access002.log";
   prueba(archivo);
+  //pruebadiff();
   return 0;
 }
+
+void pruebadiff(){
+	char* t1 = "2015-05-17T10:05:00+00:00";
+	char* t2 = "2015-05-17T10:05:02+00:00";
+	
+	time_t i = iso8601_to_time(t1);
+	time_t f = iso8601_to_time(t2);
+	
+	double l = difftime(f,i);
+	
+	fprintf(stdout,"   %f\n",l);
+
+}
+
 
 bool prueba(char* archivo){
   FILE* f;
@@ -191,7 +207,7 @@ void cargar_tiempo(hash_t* hash, char* ip, char* tiempo){
 bool tiempo_sospechoso( char* inicio, char* fin){
 	time_t i = iso8601_to_time(inicio);
 	time_t f = iso8601_to_time(fin);
-	return ( difftime(i,f) < 2.0 );
+	return ( difftime(f,i) < 2.0 );
 }
 
 
