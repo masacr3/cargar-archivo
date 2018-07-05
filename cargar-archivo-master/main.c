@@ -14,7 +14,7 @@
 #include "lista.h" // listas
 
 //prototype
-bool prueba(char*);
+bool cargar_archivo(char*);
 void pruebadiff();
 
 
@@ -31,38 +31,18 @@ void eliminar_tiempo(void*);
 time_t iso8601_to_time(const char*); //ok
 bool tiempo_sospechoso(char*,char*); //ok
 void cargar_tiempo(hash_t*,char*,char*); //ok
-bool dos_attack(lista_t*);
+bool dos_attack(lista_t*);//ok
 void DOS(hash_t*); // agregar el heap
-
-//bool es_dos(const char*, const char*);
-
-//principal function
-//void DOS(const hash_t*);
-
 
 
 int main(){
   char* archivo = "access002.log";
-  prueba(archivo);
-  //pruebadiff();
+  cargar_archivo(archivo);
   return 0;
 }
 
-void pruebadiff(){
-	char* t1 = "2015-05-17T10:05:00+00:00";
-	char* t2 = "2015-05-17T10:05:02+00:00";
-	
-	time_t i = iso8601_to_time(t1);
-	time_t f = iso8601_to_time(t2);
-	
-	double l = difftime(f,i);
-	
-	fprintf(stdout,"   %f\n",l);
 
-}
-
-
-bool prueba(char* archivo){
+bool cargar_archivo(char* archivo){
   FILE* f;
 
   if ( (f = fopen(archivo,"r")) == NULL ) return false;
@@ -70,7 +50,6 @@ bool prueba(char* archivo){
   char *linea = NULL;
   size_t capacidad = 0;
   ssize_t read;
-	size_t leer = 0;
 	
 	hash_t* hash = hash_crear( eliminar_tiempo );
 	
@@ -80,9 +59,7 @@ bool prueba(char* archivo){
 	}
 
   
-  while ( ( read = getline(&linea, &capacidad, f) ) != -1 ){
-    
-		leer++;		
+  while ( ( read = getline(&linea, &capacidad, f) ) != -1 ){		
 
     char** datos = split(linea,'\t');
 
@@ -131,11 +108,11 @@ bool prueba(char* archivo){
 
     //todo OK creo copias para las siguientes estructuras
     strcpy(ip_dos, datos[0]);
+    
     //strcpy(ip_visitantes, datos[0]);
+    
     strcpy(tiempo, datos[1]);
-    
-    //fprintf(stdout, "dos: %s | visitantes: %s | tiempo: %s \n", ip_dos, ip_visitantes, tiempo);
-    
+   
     cargar_tiempo( hash, ip_dos, tiempo );
     
     //tengo que borrar ya que el hash guarda una copia
@@ -143,33 +120,9 @@ bool prueba(char* archivo){
     free(ip_dos);    
     free_strv(datos);
   }
-	/*
-	hash_iter_t *it = hash_iter_crear(hash);
-	
-	while( !hash_iter_al_final(it) ){
-		const char* c = hash_iter_ver_actual(it);
-		lista_t* l = hash_obtener(hash,c);
-		lista_iter_t* it_l = lista_iter_crear(l);
-		
-		fprintf(stdout,"\n\nip: %s tiempo:", c);
-		
-		while ( !lista_iter_al_final(it_l) ){
-			fprintf(stdout," %s,",(char*)lista_iter_ver_actual(it_l));
-			lista_iter_avanzar(it_l);
-		}
-		
-		lista_iter_destruir(it_l);
-		hash_iter_avanzar(it);
-	}
-	hash_iter_destruir(it);
-	*/
 	
 	DOS(hash);
-	
-		
 
-	fprintf(stdout,"\n\n%d\n",(int)leer);	
-	
 	fclose(f);
 	free(linea);
 	hash_destruir(hash);
@@ -203,7 +156,6 @@ void cargar_tiempo(hash_t* hash, char* ip, char* tiempo){
 	
 }
 
-//inicio < fin
 bool tiempo_sospechoso( char* inicio, char* fin){
 	time_t i = iso8601_to_time(inicio);
 	time_t f = iso8601_to_time(fin);
@@ -213,7 +165,7 @@ bool tiempo_sospechoso( char* inicio, char* fin){
 
 bool dos_attack( lista_t* lista_tiempo ){
 
-	// si esta vacio o el largo de tiempos es menor a 5 no hay atacke
+	// si esta vacio o el largo de tiempos es menor a 5 no hay ataque
 	if ( lista_esta_vacia(lista_tiempo) || lista_largo(lista_tiempo) < 5 ) return false;
 
 	lista_iter_t* primero = lista_iter_crear(lista_tiempo);
@@ -256,10 +208,12 @@ void DOS (hash_t* hash){
 
 	if (!iter) return ;
 	
+	//recorro todo el hash verificando el ataque
 	while ( !hash_iter_al_final(iter) ){
 		const char* ip = hash_iter_ver_actual(iter);
 		lista_t* lista_tiempos = hash_obtener(hash,ip);
 		
+		//hay ataque
 		if ( dos_attack(lista_tiempos) ) {
 			char* copy_ip = malloc( sizeof(char) * ( strlen(ip) + 1 ) );
 			
