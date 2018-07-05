@@ -24,7 +24,7 @@ struct lista_iter{
 };
 /* Primitivas Nodo */
 
-nodo_t* nodo_crear(void* valor){
+nodo_t* nodo_crear_l(void* valor){
   nodo_t* nodo = malloc(sizeof(nodo_t));
 
   if(!nodo) return NULL;
@@ -53,7 +53,7 @@ bool lista_esta_vacia(const lista_t *lista){
 }
 
 bool lista_insertar_primero(lista_t *lista, void *dato){
-  nodo_t* nodo = nodo_crear(dato);
+  nodo_t* nodo = nodo_crear_l(dato);
 
   if(!nodo) return false;
 
@@ -67,7 +67,7 @@ bool lista_insertar_primero(lista_t *lista, void *dato){
 }
 
 bool lista_insertar_ultimo(lista_t *lista, void *dato){
-  nodo_t* nodo = nodo_crear(dato);
+  nodo_t* nodo = nodo_crear_l(dato);
 
   if(!nodo) return false;
 
@@ -155,7 +155,7 @@ void lista_iter_destruir(lista_iter_t *iter){
 }
 
 bool lista_iter_insertar(lista_iter_t *iter, void *dato){
-  nodo_t* nodo = nodo_crear(dato);
+  nodo_t* nodo = nodo_crear_l(dato);
 
   if(!nodo) return false;
 

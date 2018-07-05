@@ -11,10 +11,21 @@
 #include "strutil.h" //splitMEEEE!
 #include "hash.h" //DOS
 #include "abb.h" //Ver-visitantes
+#include "heap.h"
 #include "lista.h" // listas
 
 //prototype
 bool cargar_archivo(char*,abb_t*);
+
+/*
+ * comparacion
+ *
+ */
+
+int cmp_numeros_i(const int a, const int b);
+int cmp_ip_i(const void* ip1,const void* ip2);
+int cmp_numeros(const int a, const int b);
+int cmp_ip(const char* ip1,const char* ip2);
 
 
 /*
@@ -45,8 +56,10 @@ void DOS(hash_t*); // agregar el heap
 
 int main(){
   char* archivo = "access002.log";
-  abb_t* visitantes = abb_crear(cmp_ip);
+  abb_t* abb = abb_crear(cmp_ip,NULL);
   cargar_archivo(archivo, abb);
+  abb_destruir(abb);
+  
   return 0;
 }
 
@@ -128,7 +141,7 @@ bool cargar_archivo(char* archivo, abb_t* visitantes){
     
     //tengo que borrar ya que el hash guarda una copia
     //y me queda colgado UU.
-    free(ip_visitantes)
+    free(ip_visitantes);
     free(ip_dos);    
     free_strv(datos);
   }
@@ -136,7 +149,7 @@ bool cargar_archivo(char* archivo, abb_t* visitantes){
 	DOS(hash);
 	
 	//RESULT
-	fprintf(stdout,"%s","OK");
+	fprintf(stdout,"%s","OK\n");
 	
 
 	fclose(f);
@@ -221,7 +234,7 @@ bool dos_attack( lista_t* lista_tiempo ){
 
 void DOS (hash_t* hash){
 
-	heap_t* heap = heap_crear(cmp_ip);
+	heap_t* heap = heap_crear(cmp_ip_i);
 	
 	if(!heap) return;
 		
@@ -262,6 +275,82 @@ void DOS (hash_t* hash){
 	hash_iter_destruir(iter);
 
 }
+
+int cmp_numeros_i(const int a, const int b){
+	if (a < b) return 1;
+	if (a > b) return -1;
+	return 0;
+}
+
+int cmp_ip_i(const void* ip1,const void* ip2){
+	char** vector_ip1 = split(ip1, '.');
+	char** vector_ip2 = split(ip2, '.');
+	
+	/*off
+		+bad logic
+		+fix remove vector_ips
+		
+	for (int i = 0; i < 4; i++){
+		int resultado = cmp_numeros(atoi(vector_ip1[i]), atoi(vector_ip2[i]);
+		if (resultado > 0) return resultado;
+					    
+		if (resultado < 0) return resultado;
+					    
+	}
+	*/
+	//refactor
+	//@Leonel R.
+	int res = 0;
+	
+	for( int i=0; i<4 ; i++){
+		res = cmp_numeros_i( atoi(vector_ip1[i]), atoi(vector_ip2[i]) );
+		if (res) break;
+	}
+	
+	free_strv(vector_ip1);			    
+	free_strv(vector_ip2);
+	
+	return res;
+}
+
+int cmp_numeros(const int a, const int b){
+	if (a < b) return -1;
+	if (a > b) return 1;
+	return 0;
+}
+
+int cmp_ip(const char* ip1,const char* ip2){
+	char** vector_ip1 = split(ip1, '.');
+	char** vector_ip2 = split(ip2, '.');
+	
+	/*off
+		+bad logic
+		+fix remove vector_ips
+		
+	for (int i = 0; i < 4; i++){
+		int resultado = cmp_numeros(atoi(vector_ip1[i]), atoi(vector_ip2[i]);
+		if (resultado > 0) return resultado;
+					    
+		if (resultado < 0) return resultado;
+					    
+	}
+	*/
+	//refactor
+	//@Leonel R.
+	int res = 0;
+	
+	for( int i=0; i<4 ; i++){
+		res = cmp_numeros( atoi(vector_ip1[i]), atoi(vector_ip2[i]) );
+		if (res) break;
+	}
+	
+	free_strv(vector_ip1);			    
+	free_strv(vector_ip2);
+	
+	return res;
+}
+
+
 
 time_t iso8601_to_time(const char* iso8601)
 {
