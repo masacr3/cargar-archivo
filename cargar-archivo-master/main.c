@@ -53,11 +53,18 @@ bool dos_attack(lista_t*);//ok
 //Verifica los ips con DOS
 void DOS(hash_t*); // agregar el heap
 
+/*
+ *	Ver visitantes
+ *
+ */
+
+void VER_VISITANTES(abb_t*,const char*,const char*);
 
 int main(){
   char* archivo = "access002.log";
   abb_t* abb = abb_crear(cmp_ip,NULL);
   cargar_archivo(archivo, abb);
+  VER_VISITANTES(abb,"0.0.0.0","255.255.255.255");
   abb_destruir(abb);
   
   return 0;
@@ -137,7 +144,7 @@ bool cargar_archivo(char* archivo, abb_t* visitantes){
    
     cargar_tiempo( hash, ip_dos, tiempo );
     
-    abb_guardar(visitantes, ip_visitantes, NULL);
+    abb_guardar(visitantes, ip_visitantes, ip_visitantes);
     
     //tengo que borrar ya que el hash guarda una copia
     //y me queda colgado UU.
@@ -357,4 +364,25 @@ time_t iso8601_to_time(const char* iso8601)
     struct tm bktime = { 0 };
     strptime(iso8601, TIME_FORMAT, &bktime);
     return mktime(&bktime);
+}
+
+//ver visitantes
+
+void VER_VISITANTES(abb_t* abb, const char* inicio, const char* fin){
+	abb_iter_t* it = abb_iter_in_crear(abb, inicio, fin);
+	
+	if (!it) return;
+	
+	fprintf(stdout,"%s: cantidad:%d\n","Ver visitantes",(int)abb_cantidad(abb));
+	
+	int l = 0;
+	while ( !abb_iter_in_al_final(it)){
+		//const char* ip = abb_iter_in_ver_actual(it);
+		
+		fprintf(stdout,"\t%d\n",l++);
+		
+		abb_iter_in_avanzar(abb,it);	
+	}
+	
+	abb_iter_in_destruir(it);
 }
